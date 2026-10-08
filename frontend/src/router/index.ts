@@ -1,0 +1,66 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    {
+      path: '/login',
+      name: 'Login',
+      component: () => import('@/views/login/index.vue'),
+      meta: { public: true },
+    },
+    {
+      path: '/',
+      component: () => import('@/layouts/BasicLayout.vue'),
+      redirect: '/dashboard',
+      children: [
+        { path: 'dashboard', name: 'Dashboard',
+          component: () => import('@/views/dashboard/index.vue'),
+          meta: { title: '看板统计' } },
+
+        { path: 'input', name: 'Input',
+          component: () => import('@/views/placeholder.vue'),
+          meta: { title: '数据填报' } },
+        { path: 'report', name: 'Report',
+          component: () => import('@/views/placeholder.vue'),
+          meta: { title: '报表中心' } },
+        { path: 'debt', name: 'Debt',
+          component: () => import('@/views/placeholder.vue'),
+          meta: { title: '债务概况' } },
+        { path: 'credit', name: 'Credit',
+          component: () => import('@/views/placeholder.vue'),
+          meta: { title: '债权概况' } },
+        { path: 'system/projects', name: 'Projects',
+          component: () => import('@/views/system/projects.vue'),
+          meta: { title: '项目管理' } },
+        { path: 'system/suppliers', name: 'Suppliers',
+          component: () => import('@/views/system/suppliers.vue'),
+          meta: { title: '供应商管理' } },
+        { path: 'system/dicts', name: 'Dicts',
+          component: () => import('@/views/system/dicts.vue'),
+          meta: { title: '字典管理' } },
+        { path: 'system/users', name: 'Users',
+          component: () => import('@/views/placeholder.vue'),
+          meta: { title: '用户权限' } },
+        { path: 'system/init', name: 'Init',
+          component: () => import('@/views/placeholder.vue'),
+          meta: { title: '期初初始化' } },
+      ],
+    },
+    { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
+  ],
+})
+
+router.beforeEach(async (to) => {
+  const store = useUserStore()
+  if (to.meta.public) return true
+  if (!store.isLogin) return { path: '/login', query: { redirect: to.fullPath } }
+  if (!store.user) {
+    try { await store.fetchMe() }
+    catch { store.logout(); return { path: '/login' } }
+  }
+  return true
+})
+
+export default router
