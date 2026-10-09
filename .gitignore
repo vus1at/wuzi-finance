@@ -25,10 +25,11 @@ dist/
 
 # ============ 环境变量 ============
 .env
-.env.local
-.env.*.local
+.env.*
 **/.env
-**/.env.local
+**/.env.*
+!.env.example
+!.env.*.example
 
 # ============ 本地数据库 ============
 *.db
