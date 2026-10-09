@@ -32,9 +32,9 @@
           <el-option label="水利" value="水利" />
         </el-select>
         <el-select v-model="filters.status_filter" placeholder="项目状态" clearable style="width: 130px">
-          <el-option label="全部" value="" />
-          <el-option label="启用" value="启用" />
-          <el-option label="停用" value="停用" />
+          <el-option label="全部" :value="undefined" />
+          <el-option label="启用" :value="1" />
+          <el-option label="停用" :value="0" />
         </el-select>
         <el-button type="primary" @click="loadList">
           <el-icon><Search /></el-icon> 查询
@@ -57,18 +57,28 @@
         </el-table-column>
         <el-table-column prop="name" label="项目名称" min-width="140" />
         <el-table-column prop="category" label="类别" width="100" />
-        <el-table-column prop="sub_company" label="子分公司" width="110" />
-        <el-table-column prop="addr" label="项目地址" min-width="140" />
+        <el-table-column prop="subsidiary_name" label="子分公司" width="110">
+          <template #default="{ row }">
+            <span>{{ row.subsidiary_name || '—' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="address" label="项目地址" min-width="140" />
         <el-table-column prop="status" label="项目状态" width="140">
           <template #default="{ row }">
             <el-switch
               v-model="row.status"
-              active-value="启用"
-              inactive-value="停用"
-              @change="(val: string) => onToggleStatus(row, val)"
+              :active-value="1"
+              :inactive-value="0"
+              @change="(val: number) => onToggleStatus(row, val)"
             />
-            <span :style="{ marginLeft: '8px', fontSize: '12px', color: row.status === '启用' ? '#16a34a' : '#94a3b8' }">
-              {{ row.status === '启用' ? '开启' : '关闭' }}
+            <span
+              :style="{
+                marginLeft: '8px',
+                fontSize: '12px',
+                color: row.status === 1 ? '#16a34a' : '#94a3b8',
+              }"
+            >
+              {{ row.status === 1 ? '开启' : '关闭' }}
             </span>
           </template>
         </el-table-column>
@@ -80,9 +90,7 @@
         </el-table-column>
       </el-table>
 
-      <div class="table-footer">
-        共 {{ list.length }} 条
-      </div>
+      <div class="table-footer">共 {{ list.length }} 条</div>
     </el-card>
 
     <!-- 新增/编辑弹窗 -->
@@ -104,19 +112,28 @@
             <el-option label="水利" value="水利" />
           </el-select>
         </el-form-item>
-        <el-form-item label="子分公司" prop="sub_company">
-          <el-select v-model="form.sub_company" style="width: 100%">
-            <el-option v-for="c in ['一处','二处','三处','四处','五处','六处','隧道股份','机电','设备','特种','局外单位']"
-              :key="c" :label="c" :value="c" />
+        <el-form-item label="子分公司" prop="subsidiary_id">
+          <el-select
+            v-model="form.subsidiary_id"
+            placeholder="请选择"
+            clearable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="d in departments"
+              :key="d.id"
+              :label="d.name"
+              :value="d.id"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="项目地址" prop="addr">
-          <el-input v-model="form.addr" placeholder="如：云南大理" />
+        <el-form-item label="项目地址" prop="address">
+          <el-input v-model="form.address" placeholder="如：云南大理" />
         </el-form-item>
         <el-form-item label="项目状态" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio value="启用">启用</el-radio>
-            <el-radio value="停用">停用</el-radio>
+            <el-radio :value="1">启用</el-radio>
+            <el-radio :value="0">停用</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
@@ -135,23 +152,43 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { OfficeBuilding, Plus, Search } from '@element-plus/icons-vue'
 import {
-  listProjectsApi, createProjectApi, updateProjectApi,
-  deleteProjectApi, toggleProjectStatusApi, type Project,
+  listProjectsApi,
+  createProjectApi,
+  updateProjectApi,
+  deleteProjectApi,
+  toggleProjectStatusApi,
+  type Project,
 } from '@/api/project'
+import request from '@/utils/request'
+
+interface Department {
+  id: number
+  name: string
+}
 
 const list = ref<Project[]>([])
+const departments = ref<Department[]>([])
 const loading = ref(false)
 const saving = ref(false)
-const filters = reactive({ keyword: '', category: '', status_filter: '' })
+
+const filters = reactive<{
+  keyword: string
+  category: string
+  status_filter: number | undefined
+}>({
+  keyword: '',
+  category: '',
+  status_filter: undefined,
+})
 
 const dialog = reactive({ visible: false, isEdit: false, editingId: 0 })
 const formRef = ref<FormInstance>()
 const form = reactive({
   name: '',
   category: '铁路',
-  sub_company: '一处',
-  addr: '',
-  status: '启用',
+  subsidiary_id: undefined as number | undefined,
+  address: '',
+  status: 1,
 })
 
 const rules: FormRules = {
@@ -167,17 +204,27 @@ async function loadList() {
   }
 }
 
+async function loadDepartments() {
+  departments.value = await request.get<any, Department[]>('/projects/meta/departments')
+}
+
 function resetFilters() {
   filters.keyword = ''
   filters.category = ''
-  filters.status_filter = ''
+  filters.status_filter = undefined
   loadList()
 }
 
 function openCreate() {
   dialog.isEdit = false
   dialog.editingId = 0
-  Object.assign(form, { name: '', category: '铁路', sub_company: '一处', addr: '', status: '启用' })
+  Object.assign(form, {
+    name: '',
+    category: '铁路',
+    subsidiary_id: undefined,
+    address: '',
+    status: 1,
+  })
   dialog.visible = true
 }
 
@@ -187,8 +234,8 @@ function openEdit(row: Project) {
   Object.assign(form, {
     name: row.name,
     category: row.category || '铁路',
-    sub_company: row.sub_company || '一处',
-    addr: row.addr || '',
+    subsidiary_id: row.subsidiary_id ?? undefined,
+    address: row.address || '',
     status: row.status,
   })
   dialog.visible = true
@@ -199,11 +246,15 @@ async function onSubmit() {
   if (!ok) return
   saving.value = true
   try {
+    const payload = {
+      ...form,
+      subsidiary_id: form.subsidiary_id ?? null,
+    }
     if (dialog.isEdit) {
-      await updateProjectApi(dialog.editingId, { ...form })
+      await updateProjectApi(dialog.editingId, payload as any)
       ElMessage.success('修改成功')
     } else {
-      await createProjectApi({ ...form })
+      await createProjectApi(payload as any)
       ElMessage.success('新增成功')
     }
     dialog.visible = false
@@ -224,17 +275,20 @@ async function onDelete(row: Project) {
   loadList()
 }
 
-async function onToggleStatus(row: Project, val: string) {
+async function onToggleStatus(row: Project, val: number) {
   try {
     await toggleProjectStatusApi(row.id, val)
-    ElMessage.success(`项目已${val === '启用' ? '启用' : '停用'}`)
+    ElMessage.success(`项目已${val === 1 ? '启用' : '停用'}`)
   } catch {
     // 失败回滚
-    row.status = val === '启用' ? '停用' : '启用'
+    row.status = val === 1 ? 0 : 1
   }
 }
 
-onMounted(loadList)
+onMounted(() => {
+  loadList()
+  loadDepartments()
+})
 </script>
 
 <style scoped>

@@ -93,8 +93,9 @@ const store = useUserStore()
 const router = useRouter()
 
 const roleText = computed(() => {
-  const map: Record<string, string> = { admin: '管理员', editor: '填报人', viewer: '查看人' }
-  return map[store.user?.role || 'viewer'] || '用户'
+  const map: Record<string, string> = { ADMIN: '管理员', EDITOR: '填报人', VIEWER: '查看人' }
+  const first = (store.user?.roles || [])[0] || 'VIEWER'
+  return map[first] || '用户'
 })
 
 function onLogout() {

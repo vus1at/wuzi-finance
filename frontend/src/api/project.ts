@@ -3,25 +3,28 @@ import request from '@/utils/request'
 export interface Project {
   id: number
   name: string
+  short_name?: string
   category?: string
-  sub_company?: string
-  addr?: string
-  status: string
+  subsidiary_id?: number | null
+  subsidiary_name?: string | null
+  address?: string
+  status: number          // 1启用 0停用
   created_at?: string
 }
 
 export interface ProjectCreate {
   name: string
+  short_name?: string
   category?: string
-  sub_company?: string
-  addr?: string
-  status?: string
+  subsidiary_id?: number | null
+  address?: string
+  status?: number
 }
 
 export const listProjectsApi = (params?: {
   keyword?: string
   category?: string
-  status_filter?: string
+  status_filter?: number
 }) => request.get<any, Project[]>('/projects', { params })
 
 export const createProjectApi = (data: ProjectCreate) =>
@@ -33,5 +36,5 @@ export const updateProjectApi = (id: number, data: Partial<ProjectCreate>) =>
 export const deleteProjectApi = (id: number) =>
   request.delete(`/projects/${id}`)
 
-export const toggleProjectStatusApi = (id: number, status: string) =>
+export const toggleProjectStatusApi = (id: number, status: number) =>
   request.patch<any, Project>(`/projects/${id}/status`, { status })

@@ -3,31 +3,32 @@ from pydantic import BaseModel, Field
 
 
 class ProjectCreate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=80)
+    name: str = Field(..., min_length=1, max_length=64)
+    short_name: str = ""
     category: str = "铁路"
-    sub_company: str = "一处"
-    addr: str = ""
-    status: str = "启用"
+    subsidiary_id: int | None = None
+    address: str = ""
+    status: int = 1
 
 
 class ProjectUpdate(BaseModel):
     name: str | None = None
+    short_name: str | None = None
     category: str | None = None
-    sub_company: str | None = None
-    addr: str | None = None
-
-
-class ProjectStatusUpdate(BaseModel):
-    status: str = Field(..., description="启用/停用")
+    subsidiary_id: int | None = None
+    address: str | None = None
+    status: int | None = None
 
 
 class ProjectOut(BaseModel):
     id: int
     name: str
+    short_name: str | None = None
     category: str | None = None
-    sub_company: str | None = None
-    addr: str | None = None
-    status: str
+    subsidiary_id: int | None = None
+    subsidiary_name: str | None = None   
+    address: str | None = None
+    status: int
     created_at: datetime | None = None
 
     class Config:

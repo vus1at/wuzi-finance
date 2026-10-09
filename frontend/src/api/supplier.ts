@@ -3,28 +3,29 @@ import request from '@/utils/request'
 export interface Supplier {
   id: number
   name: string
-  type?: string
-  contact?: string
-  phone?: string
-  addr?: string
-  scope?: string
-  capital?: string
-  founded?: string
+  type?: number
+  contact_name?: string
+  contact_mobile?: string
+  company_address?: string
+  business_scope?: string
+  amount?: number
+  established_date?: string
+  status?: string
   created_at?: string
 }
 
 export interface SupplierCreate {
   name: string
-  type?: string
-  contact?: string
-  phone?: string
-  addr?: string
-  scope?: string
-  capital?: string
-  founded?: string
+  type?: number
+  contact_name?: string
+  contact_mobile?: string
+  company_address?: string
+  business_scope?: string
+  amount?: number
+  established_date?: string
 }
 
-export const listSuppliersApi = (params?: { keyword?: string; type_filter?: string }) =>
+export const listSuppliersApi = (params?: { keyword?: string; type_filter?: number }) =>
   request.get<any, Supplier[]>('/suppliers', { params })
 
 export const createSupplierApi = (data: SupplierCreate) =>

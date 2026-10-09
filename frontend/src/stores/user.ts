@@ -8,7 +8,7 @@ export const useUserStore = defineStore('user', {
   }),
   getters: {
     isLogin: (s) => !!s.token,
-    isAdmin: (s) => s.user?.role === 'admin',
+    isAdmin: (s) => (s.user?.roles || []).includes('ADMIN'),
   },
   actions: {
     async login(params: LoginParams) {

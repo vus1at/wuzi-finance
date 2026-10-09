@@ -41,7 +41,7 @@ const router = createRouter({
           component: () => import('@/views/system/dicts.vue'),
           meta: { title: '字典管理' } },
         { path: 'system/users', name: 'Users',
-          component: () => import('@/views/placeholder.vue'),
+          component: () => import('@/views/system/users.vue'),
           meta: { title: '用户权限' } },
         { path: 'system/init', name: 'Init',
           component: () => import('@/views/placeholder.vue'),

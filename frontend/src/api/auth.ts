@@ -9,9 +9,9 @@ export interface UserInfo {
   id: number
   username: string
   real_name?: string
-  dept?: string
-  role: 'admin' | 'editor' | 'viewer'
-  data_scope: string
+  phone?: string
+  status: number
+  roles: string[]      
 }
 
 export const loginApi = (data: LoginParams) =>
