@@ -11,7 +11,8 @@ from app.models.sys_user import SysUser  # noqa: F401
 from app.models.sys_role import SysRole  # noqa: F401
 from app.models.sys_user_role import SysUserRole  # noqa: F401
 from app.models.sys_department import SysDepartment  # noqa: F401
-
+from app.models.sys_menu import SysMenu  # noqa: F401
+from app.models.sys_role_menu import SysRoleMenu  # noqa: F401
 
 from app.api.v1.auth import router as auth_router
 from app.api.v1.project import router as project_router
@@ -19,6 +20,8 @@ from app.api.v1.supplier import router as supplier_router
 from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.dict import router as dict_router
 from app.api.v1.sys_user import router as sys_user_router
+from app.api.v1.sys_menu import router as sys_menu_router
+from app.api.v1.sys_role import router as sys_role_router
 
 app = FastAPI(title=settings.APP_NAME)
 
@@ -39,6 +42,8 @@ app.include_router(supplier_router, prefix=settings.API_PREFIX)
 app.include_router(dashboard_router, prefix=settings.API_PREFIX)
 app.include_router(dict_router, prefix=settings.API_PREFIX)
 app.include_router(sys_user_router, prefix=settings.API_PREFIX)
+app.include_router(sys_menu_router, prefix=settings.API_PREFIX)
+app.include_router(sys_role_router, prefix=settings.API_PREFIX)
 
 
 @app.get("/health")

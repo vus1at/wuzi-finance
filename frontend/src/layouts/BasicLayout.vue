@@ -14,47 +14,38 @@
         active-text-color="#fff"
         class="side-menu"
       >
-        <el-menu-item-group title="核心功能">
-          <el-menu-item index="/dashboard">
-            <el-icon><Odometer /></el-icon><span>看板统计</span>
-          </el-menu-item>
-          <el-menu-item index="/input">
-            <el-icon><Upload /></el-icon><span>数据填报</span>
-          </el-menu-item>
-        </el-menu-item-group>
+        <template v-for="group in menuGroups" :key="group.name">
+          <el-menu-item-group :title="group.name">
+            <template v-for="menu in group.items" :key="menu.id">
+              <!-- 有子菜单 -->
+              <el-sub-menu
+                v-if="menu.children && menu.children.length"
+                :index="'sub-' + menu.id"
+              >
+                <template #title>
+                  <MenuIcon :icon="menu.icon" />
+                  <span>{{ menu.menu_name }}</span>
+                </template>
+                <el-menu-item
+                  v-for="child in menu.children"
+                  :key="child.id"
+                  :index="child.path"
+                >
+                  <MenuIcon :icon="child.icon" />
+                  <span>{{ child.menu_name }}</span>
+                </el-menu-item>
+              </el-sub-menu>
 
-        <el-menu-item-group title="报表分析">
-          <el-menu-item index="/report">
-            <el-icon><PieChart /></el-icon><span>报表中心</span>
-          </el-menu-item>
-          <el-menu-item index="/debt">
-            <el-icon><Tickets /></el-icon><span>债务概况</span>
-          </el-menu-item>
-          <el-menu-item index="/credit">
-            <i class="fas fa-balance-scale menu-fa-icon"></i><span>债权概况</span>
-          </el-menu-item>
-        </el-menu-item-group>
-
-        <el-menu-item-group title="系统管理">
-          <el-menu-item index="/system/projects">
-            <el-icon><OfficeBuilding /></el-icon><span>项目管理</span>
-          </el-menu-item>
-          <el-menu-item index="/system/suppliers">
-            <el-icon><Connection /></el-icon><span>供应商管理</span>
-          </el-menu-item>
-          <el-menu-item index="/system/dicts">
-            <el-icon><List /></el-icon><span>字典管理</span>
-          </el-menu-item>
-          <el-menu-item index="/system/users">
-            <el-icon><UserFilled /></el-icon><span>用户权限</span>
-          </el-menu-item>
-          <el-menu-item index="/system/init">
-            <el-icon><Upload /></el-icon><span>期初初始化</span>
-          </el-menu-item>
-        </el-menu-item-group>
+              <!-- 无子菜单 -->
+              <el-menu-item v-else :index="menu.path">
+                <MenuIcon :icon="menu.icon" />
+                <span>{{ menu.menu_name }}</span>
+              </el-menu-item>
+            </template>
+          </el-menu-item-group>
+        </template>
       </el-menu>
 
-      <!-- 底部用户栏 -->
       <div class="sidebar-footer">
         <el-icon><UserFilled /></el-icon>
         <span class="user-name">{{ store.user?.username || 'admin' }}</span>
@@ -81,13 +72,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import {
-  Box, Odometer, Upload, PieChart, Tickets,
-  OfficeBuilding, Connection, List, UserFilled, SwitchButton,
-} from '@element-plus/icons-vue'
+import { Box, UserFilled, SwitchButton } from '@element-plus/icons-vue'
+import { getMyMenuTreeApi, type Menu } from '@/api/sys-menu'
+import MenuIcon from '@/components/MenuIcon.vue'
 
 const store = useUserStore()
 const router = useRouter()
@@ -98,10 +88,48 @@ const roleText = computed(() => {
   return map[first] || '用户'
 })
 
+const menuTree = ref<Menu[]>([])
+
+/**
+ * 分组映射：把顶级菜单按"业务分类"归组
+ * 数据库暂时没有"分组"字段，前端写死映射，等以后扩展再加
+ */
+const GROUP_MAP: Record<string, string> = {
+  dashboard: '核心功能',
+  input: '核心功能',
+  report: '报表分析',
+  debt: '报表分析',
+  credit: '报表分析',
+  system: '系统管理',
+}
+const GROUP_ORDER = ['核心功能', '报表分析', '系统管理', '其他']
+
+const menuGroups = computed(() => {
+  const groups: Record<string, Menu[]> = {}
+  for (const m of menuTree.value) {
+    const g = GROUP_MAP[m.menu_code || ''] || '其他'
+    if (!groups[g]) groups[g] = []
+    groups[g].push(m)
+  }
+  return GROUP_ORDER
+    .filter((name) => groups[name] && groups[name].length > 0)
+    .map((name) => ({ name, items: groups[name] }))
+})
+
+async function loadMenus() {
+  try {
+    menuTree.value = await getMyMenuTreeApi()
+  } catch (e) {
+    console.error('加载菜单失败', e)
+  }
+}
+
 function onLogout() {
   store.logout()
   router.replace('/login')
 }
+
+onMounted(loadMenus)
 </script>
 
 <style scoped>
@@ -132,7 +160,6 @@ function onLogout() {
   border-right: none;
 }
 
-/* ============ 菜单项 ============ */
 :deep(.el-menu-item) {
   height: 44px !important;
   line-height: 44px !important;
@@ -141,22 +168,26 @@ function onLogout() {
   border-radius: 0 !important;
   border-left: 3px solid transparent;
 }
-
-/* 选中项：整行蓝底 + 左侧竖条 */
 :deep(.el-menu-item.is-active) {
   background: rgba(37, 99, 235, 0.2) !important;
   border-left-color: #2563eb !important;
   color: #fff !important;
   font-weight: 600;
 }
-
-/* 悬浮态 */
 :deep(.el-menu-item:hover) {
   background: rgba(255, 255, 255, 0.05) !important;
   color: #fff !important;
 }
-
-/* 分组标题 */
+:deep(.el-sub-menu__title) {
+  height: 44px !important;
+  line-height: 44px !important;
+  font-size: 13px !important;
+  border-left: 3px solid transparent;
+}
+:deep(.el-sub-menu__title:hover) {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #fff !important;
+}
 :deep(.el-menu-item-group__title) {
   color: rgba(255, 255, 255, 0.3) !important;
   padding: 14px 0 4px 20px !important;
@@ -165,34 +196,12 @@ function onLogout() {
   line-height: 1.2 !important;
 }
 
-/* Font Awesome 图标对齐 */
-.menu-fa-icon {
-  width: 24px;
-  text-align: center;
-  font-size: 14px;
-  margin-right: 4px;
-}
+.side-menu::-webkit-scrollbar { width: 6px; }
+.side-menu::-webkit-scrollbar-track { background: #0a1e36; }
+.side-menu::-webkit-scrollbar-thumb { background: #566a85; border-radius: 3px; }
+.side-menu::-webkit-scrollbar-thumb:hover { background: #6b8099; }
+.side-menu { scrollbar-width: thin; scrollbar-color: #566a85 #0a1e36; }
 
-/* ============ 深色滚动条 ============ */
-.side-menu::-webkit-scrollbar {
-  width: 6px;
-}
-.side-menu::-webkit-scrollbar-track {
-  background: #0a1e36;
-}
-.side-menu::-webkit-scrollbar-thumb {
-  background: #566a85;
-  border-radius: 3px;
-}
-.side-menu::-webkit-scrollbar-thumb:hover {
-  background: #6b8099;
-}
-.side-menu {
-  scrollbar-width: thin;
-  scrollbar-color: #566a85 #0a1e36;
-}
-
-/* ============ 底部用户栏 ============ */
 .sidebar-footer {
   flex-shrink: 0;
   height: 44px;
@@ -212,12 +221,8 @@ function onLogout() {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.sidebar-footer .user-sep {
-  color: rgba(255, 255, 255, 0.2);
-}
-.sidebar-footer .user-role {
-  color: rgba(255, 255, 255, 0.45);
-}
+.sidebar-footer .user-sep { color: rgba(255, 255, 255, 0.2); }
+.sidebar-footer .user-role { color: rgba(255, 255, 255, 0.45); }
 .sidebar-footer .logout {
   margin-left: auto;
   color: #60a5fa;
@@ -227,11 +232,8 @@ function onLogout() {
   gap: 3px;
   font-weight: 500;
 }
-.sidebar-footer .logout:hover {
-  color: #93c5fd;
-}
+.sidebar-footer .logout:hover { color: #93c5fd; }
 
-/* ============ 顶栏 ============ */
 .top-bar {
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
@@ -241,31 +243,10 @@ function onLogout() {
   justify-content: space-between;
   padding: 0 20px;
 }
-
-.breadcrumb {
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.bc-link {
-  color: #2563eb;
-  cursor: pointer;
-}
-.bc-link:hover {
-  text-decoration: underline;
-}
-.bc-sep {
-  color: #cbd5e1;
-}
-.bc-current {
-  color: #0f2a4a;
-  font-weight: 600;
-}
-
-.tagline {
-  font-size: 11px;
-  color: #94a3b8;
-  font-weight: 500;
-}
+.breadcrumb { font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.bc-link { color: #2563eb; cursor: pointer; }
+.bc-link:hover { text-decoration: underline; }
+.bc-sep { color: #cbd5e1; }
+.bc-current { color: #0f2a4a; font-weight: 600; }
+.tagline { font-size: 11px; color: #94a3b8; font-weight: 500; }
 </style>
