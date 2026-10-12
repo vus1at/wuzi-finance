@@ -77,11 +77,11 @@ const router = createRouter({
           component: () => import('@/views/system/users.vue'),
           meta: { title: '用户权限' },
         },
-        {
-          path: 'system/init',
+        { 
+          path: 'system/init', 
           name: 'Init',
-          component: () => import('@/views/placeholder.vue'),
-          meta: { title: '期初初始化' },
+          component: () => import('@/views/system/init.vue'),
+          meta: { title: '期初初始化' } 
         },
         {
           path: 'system/menus',
