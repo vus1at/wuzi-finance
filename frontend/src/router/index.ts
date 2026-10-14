@@ -25,13 +25,11 @@ const router = createRouter({
           component: () => import('@/views/dashboard/index.vue'),
           meta: { title: '看板统计' },
         },
-        {
-          path: 'input',
+        { path: 'input', 
           name: 'Input',
-          component: () => import('@/views/placeholder.vue'),
-          meta: { title: '数据填报' },
+          component: () => import('@/views/input/index.vue'),
+          meta: { title: '数据填报' } 
         },
-
         // ----- 报表分析 -----
         {
           path: 'report',
@@ -39,19 +37,18 @@ const router = createRouter({
           component: () => import('@/views/placeholder.vue'),
           meta: { title: '报表中心' },
         },
-        {
-          path: 'debt',
+        { 
+          path: 'debt', 
           name: 'Debt',
-          component: () => import('@/views/placeholder.vue'),
-          meta: { title: '债务概况' },
+          component: () => import('@/views/debt/index.vue'),
+          meta: { title: '债务概况' } 
         },
-        {
+        { 
           path: 'credit',
           name: 'Credit',
-          component: () => import('@/views/placeholder.vue'),
-          meta: { title: '债权概况' },
+          component: () => import('@/views/credit/index.vue'),
+          meta: { title: '债权概况' }
         },
-
         // ----- 系统管理 -----
         {
           path: 'system/projects',
