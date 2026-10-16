@@ -46,7 +46,7 @@
             :value="s.id"
           />
         </el-select>
-        <el-button type="primary" @click="loadList">
+        <el-button type="primary" @click="onSearch">
           <el-icon><Search /></el-icon> 查询
         </el-button>
         <el-button @click="resetFilters">重置</el-button>
@@ -193,13 +193,18 @@ async function loadSuppliers() {
   }
 }
 
+function onSearch() {
+  ElMessage.success('筛选条件已应用')
+  loadList()
+}
+
 function resetFilters() {
   filters.period = '2026-09'
   filters.management_type = ''
   filters.supplier_id = undefined
+  ElMessage.success('已重置')
   loadList()
 }
-
 function openCreate() {
   drawer.mode = 'create'
   drawer.editId = 0

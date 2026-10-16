@@ -25,17 +25,18 @@ const router = createRouter({
           component: () => import('@/views/dashboard/index.vue'),
           meta: { title: '看板统计' },
         },
-        { path: 'input', 
+        { 
+          path: 'input', 
           name: 'Input',
           component: () => import('@/views/input/index.vue'),
           meta: { title: '数据填报' } 
         },
         // ----- 报表分析 -----
-        {
-          path: 'report',
+        { 
+          path: 'report', 
           name: 'Report',
-          component: () => import('@/views/placeholder.vue'),
-          meta: { title: '报表中心' },
+          component: () => import('@/views/report/index.vue'),
+          meta: { title: '报表中心' } 
         },
         { 
           path: 'debt', 

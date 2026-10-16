@@ -16,13 +16,13 @@
     <el-card shadow="never" class="filter-card">
       <div class="filter-bar">
         <el-input v-model="filters.keyword" placeholder="搜索用户名/姓名" clearable
-          style="width: 220px" @keyup.enter="loadList" />
+          style="width: 220px" @keyup.enter="onSearch" />
         <el-select v-model="filters.status_filter" placeholder="状态" clearable style="width: 130px">
           <el-option label="全部" :value="undefined" />
           <el-option label="启用" :value="1" />
           <el-option label="禁用" :value="0" />
         </el-select>
-        <el-button type="primary" @click="loadList">
+        <el-button type="primary" @click="onSearch">
           <el-icon><Search /></el-icon> 查询
         </el-button>
         <el-button @click="resetFilters">重置</el-button>
@@ -141,9 +141,15 @@ async function loadRoles() {
   roles.value = await listRolesApi()
 }
 
+function onSearch() {
+  ElMessage.success('筛选条件已应用')
+  loadList()
+}
+
 function resetFilters() {
   filters.keyword = ''
   filters.status_filter = undefined
+  ElMessage.success('已重置')
   loadList()
 }
 
@@ -190,7 +196,11 @@ async function onSubmit() {
     }
     dialog.visible = false
     loadList()
-  } finally { saving.value = false }
+  } catch (e) {
+    // 错误 toast 由 axios 拦截器统一弹出，这里静默处理即可
+  } finally {
+    saving.value = false
+  }
 }
 
 async function onDelete(row: SysUser) {

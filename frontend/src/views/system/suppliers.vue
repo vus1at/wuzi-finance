@@ -29,7 +29,7 @@
           <el-option label="厂商" :value="1" />
           <el-option label="非厂商" :value="0" />
         </el-select>
-        <el-button type="primary" @click="loadList">
+        <el-button type="primary" @click="onSearch">
           <el-icon><Search /></el-icon> 查询
         </el-button>
         <el-button @click="resetFilters">重置</el-button>
@@ -198,9 +198,15 @@ async function loadList() {
   }
 }
 
+function onSearch() {
+  ElMessage.success('筛选条件已应用')
+  loadList()
+}
+
 function resetFilters() {
   filters.keyword = ''
   filters.type_filter = undefined
+  ElMessage.success('已重置')
   loadList()
 }
 
